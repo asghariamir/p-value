@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P-Value Explorer | Mathswell</title>
+    <link rel="icon" href="/logo-mathswell-square-mirror.ico" type="image/x-icon">
+    <link rel="icon" href="/logo-mathswell-square-mirror.svg" type="image/svg+xml">
+    
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    
+    <style>
+        /* Root variables */
+        :root {
+            --primary: #0f766e;
+            --primary-light: #10b981;
+            --background: #f7faf9;
+            --interactive: #e6fffb;
+            --text-primary: #212121;
+            --text-muted: #4b5563;
+            --accent-amber: #f59e0b;
+            --accent-red: #c62828;
+            --success: #10b981;
+        }
+        
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            padding-top: 60px;
+            line-height: 1.6;
+        }
+        
+        /* CENTERED Navigation */
+        .mathswell-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 2px solid var(--primary);
+            padding: 0.75rem 1rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .mw-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        /* MathPal Disclosure Banner */
+        .ai-disclosure-banner {
+            background: var(--interactive);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* CENTERED Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background: var(--interactive);
+            color: var(--primary);
+        }
+        
+        /* Tab content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Hero section */
+        .hero {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .card h4 {
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        
+        .card p {
+            color: var(--text-muted);
+        }
+        
+        /* Interactive demo */
+        .interactive-demo {
+            margin: 1.5rem 0;
+        }
+        
+        .intro-controls {
+            background: var(--background);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .intro-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .intro-control label {
+            flex: 0 0 120px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .intro-control input[type=range] {
+            flex: 1;
+        }
+        
+        /* Preset Pills */
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .preset-pill {
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .preset-pill:hover {
+            background: var(--interactive);
+            transform: translateY(-2px);
+        }
+        
+        /* Navigation buttons */
+        .nav-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+        
+        /* Panel */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .panel h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        /* Explorer grid */
+        .explorer-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        
+        /* Controls */
+        .control {
+            margin-bottom: 1rem;
+        }
+        
+        .control label {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .control input[type=range] {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+        
+        .control select {
+            padding: 0.5rem;
+            border: 1px solid #e6e6e6;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        /* Info display */
+        .info-display {
+            background: var(--interactive);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.95rem;
+        }
+        
+        .info-display-small {
+            background: var(--interactive);
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            padding: 0.3rem 0.6rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        
+        /* Viz area */
+        .viz {
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e6e6e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Row layouts */
+        .row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        /* MathPal animations */
+        @keyframes mathpal-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        
+        @keyframes robot-blink {
+            0%, 90%, 100% { opacity: 1; }
+            95% { opacity: 0.1; }
+        }
+        
+        .robot-eye {
+            animation: robot-blink 5s infinite;
+        }
+        
+        .mathpal-thinking {
+            animation: mathpal-bob 1s ease-in-out infinite;
+        }
+        
+        /* Challenge problem */
+        .problem-box {
+            background: var(--background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .problem-box h4 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .problem-data {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.95rem;
+        }
+        
+        .answer-options {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .answer-option {
+            background: white;
+            border: 2px solid #e6e6e6;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .answer-option:hover {
+            border-color: var(--primary);
+            background: var(--interactive);
+        }
+        
+        .answer-option.selected {
+            border-color: var(--primary);
+            background: var(--interactive);
+        }
+        
+        .answer-option.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .answer-option.incorrect {
+            border-color: var(--accent-red);
+            background: rgba(198, 40, 40, 0.05);
+        }
+        
+        /* Hints */
+        .hint-steps {
+            display: grid;
+            gap: 0.75rem;
+        }
+        
+        .hint-btn {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        
+        .hint-btn:hover {
+            background: var(--interactive);
+        }
+        
+        .hint {
+            background: var(--interactive);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 6px;
+            display: none;
+            margin-top: -0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hint.show {
+            display: block;
+        }
+        
+        /* Utils */
+        .tiny {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 900px) {
+            .explorer-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .intro-control {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .intro-control label {
+                flex: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .cards {
+                grid-template-columns: 1fr;
+            }
+            
+            input, button, select {
+                font-size: 16px;
+                min-height: 44px;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Centered Mathswell Navigation -->
+    <div class="mathswell-nav">
+        <a href="/" class="mw-link">
+            <img src="/logo-mathswell-square-mirror.svg" alt="Mathswell" width="28" height="28">
+            <span>MATHSWELL</span>
+        </a>
+    </div>
+    
+    <div class="container">
+        <!-- MathPal Disclosure Banner -->
+        <div class="ai-disclosure-banner">
+            <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: center;">
+                <!-- Standard MathPal Avatar -->
+                <svg width="50" height="50" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="#e6fffb"/>
+                    <rect x="35" y="60" width="30" height="25" fill="#0f766e" rx="3"/>
+                    <rect x="30" y="35" width="40" height="30" fill="#10b981" rx="8"/>
+                    <line x1="50" y1="35" x2="50" y2="25" stroke="#0f766e" stroke-width="2"/>
+                    <circle cx="50" cy="23" r="3" fill="#f59e0b"/>
+                    <circle cx="40" cy="47" r="5" fill="white"/>
+                    <circle cx="60" cy="47" r="5" fill="white"/>
+                    <circle cx="40" cy="47" r="3" fill="#0f766e" class="robot-eye"/>
+                    <circle cx="60" cy="47" r="3" fill="#0f766e" class="robot-eye"/>
+                    <path d="M 40 55 Q 50 60 60 55" stroke="#0f766e" stroke-width="2" fill="none"/>
+                </svg>
+                <div style="text-align: left;">
+                    <div style="font-weight: 600; color: var(--primary);">
+                        MathPal - Your AI Study Buddy
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        Learns alongside you • Can make mistakes • May be occasionally unavailable
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Centered Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="intro">Introduction</button>
+            <button class="tab-btn" data-tab="explorer">Explorer</button>
+            <button class="tab-btn" data-tab="challenge">Challenge with MathPal</button>
+        </div>
+        
+        <!-- Tab 1: Introduction -->
+        <div id="intro" class="tab-content active">
+            <div class="hero">
+                <h1 class="title">Understanding P-Values</h1>
+                <p class="subtitle">
+                    See how p-values emerge from the relationship between your data and the null hypothesis. 
+                    Move sliders to watch the shaded area change in real-time.
+                </p>
+                
+                <div class="interactive-demo">
+                    <div class="preset-row">
+                        <button class="preset-pill" data-preset="abtest" data-tab="intro">📊 A/B Test</button>
+                        <button class="preset-pill" data-preset="drug" data-tab="intro">💊 Drug Trial</button>
+                        <button class="preset-pill" data-preset="coin" data-tab="intro">🪙 Fair Coin</button>
+                    </div>
+                    
+                    <!-- Interactive controls for intro -->
+                    <div class="intro-controls">
+                        <div class="intro-control">
+                            <label>Sample mean</label>
+                            <input id="intro-xbar" type="range" min="-3" max="3" step="0.1" value="1">
+                            <span class="info-display-small" id="intro-xbar-val">1.0</span>
+                        </div>
+                        <div class="intro-control">
+                            <label>Sample size</label>
+                            <input id="intro-n" type="range" min="10" max="200" step="10" value="30">
+                            <span class="info-display-small" id="intro-n-val">n = 30</span>
+                        </div>
+                    </div>
+                    
+                    <div class="viz" id="intro-viz"></div>
+                    <div class="info-display" style="margin-top: 1rem;">
+                        <div id="intro-info">p-value: 0.0350 | Move the sliders to see how p-value changes!</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cards">
+                <div class="card">
+                    <h4>🎯 Hypotheses</h4>
+                    <p><span class="math">H_0</span>: The null hypothesis (no effect)</p>
+                    <p><span class="math">H_1</span>: The alternative (there is an effect)</p>
+                </div>
+                
+                <div class="card">
+                    <h4>📊 Test Statistic</h4>
+                    <p>Measures how far your data is from <span class="math">H_0</span></p>
+                    <p>Common: <span class="math">z</span> or <span class="math">t</span> statistics</p>
+                </div>
+                
+                <div class="card">
+                    <h4>🌊 P-Value</h4>
+                    <p>Probability of getting data as extreme or more extreme</p>
+                    <p>Assuming <span class="math">H_0</span> is true</p>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3>Three Ways to Think About P-Values</h3>
+                <ul style="margin: 1rem 0;">
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Frequency Perspective:</strong> If we repeated the experiment many times under <span class="math">H_0</span>, 
+                        the p-value is the fraction of results at least as extreme as ours.
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Geometric View:</strong> The p-value is the shaded tail area under the null distribution curve.
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Simulation Approach:</strong> Generate many samples assuming <span class="math">H_0</span> is true and count 
+                        how many are as extreme as your observed data.
+                    </li>
+                </ul>
+                <button class="nav-btn" onclick="switchTab('explorer')">Try the Explorer →</button>
+            </div>
+        </div>
+        
+        <!-- Tab 2: Explorer -->
+        <div id="explorer" class="tab-content">
+            <div class="explorer-grid">
+                <!-- Control Panel -->
+                <div class="panel">
+                    <h3>Parameters</h3>
+                    
+                    <div class="preset-row">
+                        <button class="preset-pill" data-preset="abtest" data-tab="explorer">📊 A/B Test</button>
+                        <button class="preset-pill" data-preset="drug" data-tab="explorer">💊 Drug Trial</button>
+                        <button class="preset-pill" data-preset="coin" data-tab="explorer">🪙 Fair Coin</button>
+                    </div>
+                    
+                    <div class="control">
+                        <label>Hypothesized mean <span class="math">\mu_0</span></label>
+                        <div class="row">
+                            <input id="mu0" type="range" min="-5" max="5" step="0.1" value="0">
+                            <span class="info-display" id="mu0Val">0.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control">
+                        <label>Observed sample mean <span class="math">\bar{x}</span></label>
+                        <div class="row">
+                            <input id="xbar" type="range" min="-5" max="5" step="0.1" value="1">
+                            <span class="info-display" id="xbarVal">1.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control">
+                        <label>Standard deviation <span class="math">\sigma</span> or <span class="math">s</span></label>
+                        <div class="row">
+                            <input id="sd" type="range" min="0.2" max="5" step="0.1" value="1.5">
+                            <span class="info-display" id="sdVal">1.5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control">
+                        <label>Sample size <span class="math">n</span></label>
+                        <div class="row">
+                            <input id="n" type="range" min="5" max="300" step="1" value="30">
+                            <span class="info-display" id="nVal">30</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control">
+                        <label>Test Configuration</label>
+                        <div class="row">
+                            <select id="testType">
+                                <option value="z">Z-test (known σ)</option>
+                                <option value="t" selected>T-test (unknown σ)</option>
+                            </select>
+                            <select id="tails">
+                                <option value="two" selected>Two-tailed</option>
+                                <option value="left">Left-tailed</option>
+                                <option value="right">Right-tailed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-row">
+                        <button class="nav-btn" id="resetBtn">Reset</button>
+                        <button class="nav-btn" id="simulateBtn">Simulate</button>
+                    </div>
+                    
+                    <p class="tiny" style="margin-top: 1rem;">
+                        Simulation runs 5,000 samples under <span class="math">H_0</span> to estimate the p-value empirically.
+                    </p>
+                </div>
+                
+                <!-- Visualization Panel -->
+                <div class="panel">
+                    <div class="row" style="justify-content: space-between; margin-bottom: 1rem;">
+                        <div>
+                            <div class="info-display" id="statBox">z = 2.108, t = 2.108</div>
+                            <div class="info-display" style="margin-top: 0.5rem;" id="pBox">p = 0.0350</div>
+                        </div>
+                        <div class="tiny" id="dfBox">df = 29</div>
+                    </div>
+                    
+                    <div class="viz" id="main-viz"></div>
+                    
+                    <div class="tiny" style="margin-top: 1rem;" id="explainBox">
+                        The shaded area represents the p-value - the probability of observing a test statistic 
+                        as extreme or more extreme than what we observed, assuming the null hypothesis is true.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 3: Challenge with MathPal -->
+        <div id="challenge" class="tab-content">
+            <div class="panel" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <!-- Small MathPal icon -->
+                    <svg width="40" height="40" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="#e6fffb"/>
+                        <rect x="35" y="60" width="30" height="25" fill="#0f766e" rx="3"/>
+                        <rect x="30" y="35" width="40" height="30" fill="#10b981" rx="8"/>
+                        <line x1="50" y1="35" x2="50" y2="25" stroke="#0f766e" stroke-width="2"/>
+                        <circle cx="50" cy="23" r="3" fill="#f59e0b"/>
+                        <circle cx="40" cy="47" r="5" fill="white"/>
+                        <circle cx="60" cy="47" r="5" fill="white"/>
+                        <circle cx="40" cy="47" r="3" fill="#0f766e" class="robot-eye"/>
+                        <circle cx="60" cy="47" r="3" fill="#0f766e" class="robot-eye"/>
+                        <path d="M 40 55 Q 50 60 60 55" stroke="#0f766e" stroke-width="2" fill="none"/>
+                    </svg>
+                    <div>
+                        <h3 style="margin: 0; color: var(--primary);">Challenge with MathPal</h3>
+                        <p class="tiny" style="margin: 0;">Let's solve specific problems together!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Problem Section -->
+            <div class="panel problem-box">
+                <h4>📝 Current Problem</h4>
+                <div class="problem-data">
+                    <strong>Scenario:</strong> Testing a new teaching method<br>
+                    <strong>Data:</strong> Control group: μ = 75, σ = 12<br>
+                    Treatment group: n = 36 students, x̄ = 79.5<br>
+                    <strong>Question:</strong> Is the new method significantly better? (α = 0.05)
+                </div>
+                
+                <div class="answer-options">
+                    <div class="answer-option" data-answer="a">
+                        <strong>A)</strong> Test statistic = 2.25, p-value = 0.024, Reject H₀
+                    </div>
+                    <div class="answer-option" data-answer="b">
+                        <strong>B)</strong> Test statistic = 2.25, p-value = 0.012, Reject H₀
+                    </div>
+                    <div class="answer-option" data-answer="c">
+                        <strong>C)</strong> Test statistic = 1.5, p-value = 0.134, Fail to reject H₀
+                    </div>
+                    <div class="answer-option" data-answer="d">
+                        <strong>D)</strong> Test statistic = 2.25, p-value = 0.048, Reject H₀
+                    </div>
+                </div>
+                
+                <div class="btn-row">
+                    <button class="nav-btn" id="submitBtn">Submit Answer</button>
+                    <button class="nav-btn" id="newProblemBtn">New Problem</button>
+                </div>
+            </div>
+            
+            <!-- MathPal Response -->
+            <div class="panel">
+                <h3>MathPal's Thinking</h3>
+                <div class="info-display" style="min-height: 150px;" id="mathpalOut">
+                    Hey! I'm working through this too. The new method looks better since x̄ = 79.5 > 75, but let's calculate if it's statistically significant!
+                </div>
+                <div class="btn-row">
+                    <button class="nav-btn" id="compareBtn">🔄 Compare Approaches</button>
+                    <button class="nav-btn" id="exploreBtn">🔬 What If We Changed...?</button>
+                </div>
+            </div>
+            
+            <!-- Progressive Hints -->
+            <div class="panel">
+                <h3>Progressive Hints</h3>
+                <div class="hint-steps">
+                    <button class="hint-btn" data-hint="setup">🎯 Setup - State the hypotheses</button>
+                    <div class="hint" id="hint-setup">
+                        Since we're testing if the new method is "better", this is a right-tailed test!<br>
+                        <span class="math">H_0: \mu = 75</span> (no improvement)<br>
+                        <span class="math">H_1: \mu > 75</span> (improvement)
+                    </div>
+                    
+                    <button class="hint-btn" data-hint="calculate">🧮 Calculate - Find the test statistic</button>
+                    <div class="hint" id="hint-calculate">
+                        Use the z-test formula: <span class="math">z = \frac{\bar{x} - \mu_0}{\sigma/\sqrt{n}}</span><br>
+                        Plug in: <span class="math">z = \frac{79.5 - 75}{12/\sqrt{36}} = \frac{4.5}{2} = 2.25</span>
+                    </div>
+                    
+                    <button class="hint-btn" data-hint="pvalue">📊 P-Value - What does 2.25 mean?</button>
+                    <div class="hint" id="hint-pvalue">
+                        For a right-tailed test with z = 2.25:<br>
+                        P(Z > 2.25) ≈ 0.012<br>
+                        Since this is one-tailed (not two-tailed), we don't double it!
+                    </div>
+                    
+                    <button class="hint-btn" data-hint="decide">✓ Decision - Compare to α</button>
+                    <div class="hint" id="hint-decide">
+                        p-value (0.012) < α (0.05)<br>
+                        So we reject H₀ and conclude the new method is significantly better!<br>
+                        The answer is B: z = 2.25, p = 0.012, Reject H₀
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === tabId);
+            });
+        }
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+        
+        // Math rendering with KaTeX
+        function renderMath() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ]
+            });
+            
+            // Also render .math spans
+            document.querySelectorAll('.math').forEach(el => {
+                if (!el.dataset.rendered) {
+                    katex.render(el.textContent, el, {throwOnError: false});
+                    el.dataset.rendered = 'true';
+                }
+            });
+        }
+        
+        // Statistical functions
+        function erf(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
+            const p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x);
+            const t = 1 / (1 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return sign * y;
+        }
+        
+        function normalCDF(x) {
+            return 0.5 * (1 + erf(x / Math.SQRT2));
+        }
+        
+        // Accurate gamma and beta functions for t-distribution
+        function lngamma(z) {
+            const g = 7;
+            const p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.3234287776531, 
+                      -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 
+                      1.5056327351493116e-7];
+            if (z < 0.5) return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - lngamma(1 - z);
+            z -= 1;
+            let x = p[0];
+            for (let i = 1; i < p.length; i++) x += p[i] / (z + i);
+            const t = z + g + 0.5;
+            return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x) - Math.log(z + 1);
+        }
+        
+        function betacf(a, b, x) {
+            const MAXIT = 100, EPS = 3e-7, FPMIN = 1e-30;
+            let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - (qab * x) / qap;
+            if (Math.abs(d) < FPMIN) d = FPMIN;
+            d = 1 / d;
+            let h = d;
+            for (let m = 1, m2 = 2; m <= MAXIT; m++, m2 += 2) {
+                let aa = (m * (b - m) * x) / ((qam + m2) * (a + m2));
+                d = 1 + aa * d;
+                if (Math.abs(d) < FPMIN) d = FPMIN;
+                c = 1 + aa / c;
+                if (Math.abs(c) < FPMIN) c = FPMIN;
+                d = 1 / d;
+                h *= d * c;
+                aa = -((a + m) * (qab + m) * x) / ((a + m2) * (qap + m2));
+                d = 1 + aa * d;
+                if (Math.abs(d) < FPMIN) d = FPMIN;
+                c = 1 + aa / c;
+                if (Math.abs(c) < FPMIN) c = FPMIN;
+                d = 1 / d;
+                h *= d * c;
+                if (Math.abs(c * d - 1) < EPS) break;
+            }
+            return h;
+        }
+        
+        function betainc(x, a, b) {
+            if (x <= 0) return 0;
+            if (x >= 1) return 1;
+            const bt = Math.exp(lngamma(a + b) - lngamma(a) - lngamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+            if (x < (a + 1) / (a + b + 2)) return bt * betacf(a, b, x) / a;
+            return 1 - bt * betacf(b, a, 1 - x) / b;
+        }
+        
+        // Accurate Student-t CDF
+        function tCDF(t, df) {
+            const x = df / (df + t * t);
+            const ib = betainc(x, df / 2, 0.5);
+            return (t >= 0) ? 1 - 0.5 * ib : 0.5 * ib;
+        }
+        
+        // Student-t PDF for drawing
+        function tPDF(x, df) {
+            const c = Math.exp(lngamma((df + 1) / 2) - lngamma(df / 2)) / Math.sqrt(df * Math.PI);
+            return c * Math.pow(1 + (x * x) / df, -(df + 1) / 2);
+        }
+        
+        // Box-Muller for proper normal random numbers
+        function randn() {
+            let u = 0, v = 0;
+            while (!u) u = Math.random();
+            while (!v) v = Math.random();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+        
+        // State management
+        const state = {
+            mu0: 0,
+            xbar: 1,
+            sd: 1.5,
+            n: 30,
+            testType: 't',
+            tails: 'two'
+        };
+        
+        // Intro state (simplified) - set initial xbar for visible tails
+        const introState = {
+            mu0: 0,
+            xbar: 0.37,  // mu0 + 2 * sd/sqrt(n) for p ≈ 0.045
+            sd: 1,
+            n: 30,
+            tails: 'two'
+        };
+        
+        // Update display values
+        function updateDisplay() {
+            // Format based on value ranges
+            const formatValue = (val) => {
+                if (Math.abs(val) >= 100) return val.toFixed(1);
+                if (Math.abs(val) >= 1) return val.toFixed(2);
+                return val.toFixed(3);
+            };
+            
+            document.getElementById('mu0Val').textContent = formatValue(state.mu0);
+            document.getElementById('xbarVal').textContent = formatValue(state.xbar);
+            document.getElementById('sdVal').textContent = formatValue(state.sd);
+            document.getElementById('nVal').textContent = state.n;
+            document.getElementById('dfBox').textContent = `df = ${state.n - 1}`;
+            
+            compute();
+        }
+        
+        function updateIntroDisplay() {
+            document.getElementById('intro-xbar-val').textContent = introState.xbar.toFixed(2);
+            document.getElementById('intro-n-val').textContent = `n = ${introState.n}`;
+            
+            const se = introState.sd / Math.sqrt(introState.n);
+            const z = (introState.xbar - introState.mu0) / se;
+            let p;
+            if (introState.tails === 'two') {
+                p = 2 * (1 - normalCDF(Math.abs(z)));
+            } else if (introState.tails === 'left') {
+                p = normalCDF(z);
+            } else {
+                p = 1 - normalCDF(z);
+            }
+            
+            const pFmt = (p) => p < 1e-4 ? '< 0.0001' : p.toFixed(4);
+            document.getElementById('intro-info').textContent = 
+                `p-value: ${pFmt(p)} | z = ${z.toFixed(3)} | Move the sliders to see how p-value changes!`;
+            
+            drawCurve('intro-viz', introState);
+        }
+        
+        // Compute statistics
+        function compute() {
+            const se = state.sd / Math.sqrt(state.n);
+            const testStat = (state.xbar - state.mu0) / se;
+            const df = state.n - 1;
+            
+            // Calculate p-value
+            let p;
+            if (state.testType === 'z') {
+                if (state.tails === 'two') {
+                    p = 2 * (1 - normalCDF(Math.abs(testStat)));
+                } else if (state.tails === 'left') {
+                    p = normalCDF(testStat);
+                } else {
+                    p = 1 - normalCDF(testStat);
+                }
+            } else {
+                // t-test
+                if (state.tails === 'two') {
+                    p = 2 * (1 - tCDF(Math.abs(testStat), df));
+                } else if (state.tails === 'left') {
+                    p = tCDF(testStat, df);
+                } else {
+                    p = 1 - tCDF(testStat, df);
+                }
+            }
+            
+            // Format output with clarity
+            const pFmt = (p) => p < 1e-4 ? '< 0.0001' : p.toFixed(4);
+            document.getElementById('statBox').textContent = (state.testType === 'z')
+                ? `z = ${testStat.toFixed(3)}`
+                : `t = ${testStat.toFixed(3)}`;
+            document.getElementById('dfBox').textContent = (state.testType === 't') ? `df = ${df}` : '';
+            document.getElementById('pBox').textContent = `p = ${pFmt(Math.max(0, Math.min(1, p)))}`;
+            
+            // Update explanation
+            document.getElementById('explainBox').innerHTML = 
+                `The shaded area represents the p-value - the probability of observing a test statistic 
+                as extreme or more extreme than what we observed, assuming the null hypothesis is true.<br>
+                <span class="tiny">Assumes independence, identically distributed data; normality matters more for small n in t-tests.</span>`;
+            
+            // Draw visualization
+            drawCurve('main-viz', state);
+        }
+        
+        // Draw distribution curve - now handles both normal and t-distributions
+        function drawCurve(containerId, stateObj = state) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const padding = 40;
+            
+            const dist = (stateObj.testType === 't') ? 't' : 'z';
+            const df = (dist === 't') ? (stateObj.n - 1) : null;
+            const testStat = (stateObj.xbar - stateObj.mu0) / (stateObj.sd / Math.sqrt(stateObj.n));
+            
+            // Wider range for t-distribution
+            const xMin = (dist === 't') ? -5 : -4;
+            const xMax = (dist === 't') ? 5 : 4;
+            const xScale = (width - 2 * padding) / (xMax - xMin);
+            const yMax = 0.45;
+            const yScale = (height - 2 * padding) / yMax;
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            
+            // Create gradient for shading
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+            const gradId = 'tail-gradient-' + containerId;
+            gradient.setAttribute('id', gradId);
+            gradient.setAttribute('x1', '0%');
+            gradient.setAttribute('y1', '0%');
+            gradient.setAttribute('x2', '0%');
+            gradient.setAttribute('y2', '100%');
+            
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop1.setAttribute('offset', '0%');
+            stop1.setAttribute('stop-color', '#10b981');
+            stop1.setAttribute('stop-opacity', '0.3');
+            
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop2.setAttribute('offset', '100%');
+            stop2.setAttribute('stop-color', '#10b981');
+            stop2.setAttribute('stop-opacity', '0.1');
+            
+            gradient.appendChild(stop1);
+            gradient.appendChild(stop2);
+            defs.appendChild(gradient);
+            svg.appendChild(defs);
+            
+            // X-axis
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', padding);
+            xAxis.setAttribute('x2', width - padding);
+            xAxis.setAttribute('y1', height - padding);
+            xAxis.setAttribute('y2', height - padding);
+            xAxis.setAttribute('stroke', '#ddd');
+            xAxis.setAttribute('stroke-width', '2');
+            svg.appendChild(xAxis);
+            
+            // Density function
+            function dens(x) {
+                return (dist === 't') ? tPDF(x, df) : (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * x * x);
+            }
+            
+            // Draw curve
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = '';
+            const steps = 300;
+            
+            for (let i = 0; i <= steps; i++) {
+                const x = xMin + (i / steps) * (xMax - xMin);
+                const y = dens(x);
+                const px = padding + (x - xMin) * xScale;
+                const py = height - padding - y * yScale;
+                
+                if (i === 0) {
+                    d += `M ${px} ${py}`;
+                } else {
+                    d += ` L ${px} ${py}`;
+                }
+            }
+            
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#0f766e');
+            path.setAttribute('stroke-width', '2');
+            svg.appendChild(path);
+            
+            // Shading function
+            function shade(fromX, toX) {
+                let shadePath = `M ${padding + (fromX - xMin) * xScale} ${height - padding}`;
+                
+                const N = 120;
+                for (let i = 0; i <= N; i++) {
+                    const x = fromX + (i / N) * (toX - fromX);
+                    const y = dens(x);
+                    const px = padding + (x - xMin) * xScale;
+                    const py = height - padding - y * yScale;
+                    shadePath += ` L ${px} ${py}`;
+                }
+                
+                shadePath += ` L ${padding + (toX - xMin) * xScale} ${height - padding} Z`;
+                
+                const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                area.setAttribute('d', shadePath);
+                area.setAttribute('fill', `url(#${gradId})`);
+                svg.appendChild(area);
+            }
+            
+            // Shade appropriate tails
+            const tails = stateObj.tails || 'two';
+            if (tails === 'two') {
+                shade(xMin, -Math.abs(testStat));
+                shade(Math.abs(testStat), xMax);
+            } else if (tails === 'left') {
+                shade(xMin, Math.min(testStat, xMax));
+            } else if (tails === 'right') {
+                shade(Math.max(testStat, xMin), xMax);
+            }
+            
+            // Draw observed value line
+            const obsX = padding + (testStat - xMin) * xScale;
+            const obsLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            obsLine.setAttribute('x1', obsX);
+            obsLine.setAttribute('x2', obsX);
+            obsLine.setAttribute('y1', height - padding);
+            obsLine.setAttribute('y2', padding);
+            obsLine.setAttribute('stroke', '#f59e0b');
+            obsLine.setAttribute('stroke-width', '2');
+            obsLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(obsLine);
+            
+            container.appendChild(svg);
+        }
+        
+        // Presets with real units
+        function setPreset(name, tab = 'explorer') {
+            const targetState = tab === 'intro' ? introState : state;
+            
+            if (name === 'abtest') {
+                // A/B test: comparing click rates
+                targetState.mu0 = 0.10;  // 10% baseline click rate
+                targetState.xbar = 0.12;  // 12% observed
+                targetState.sd = 0.05;   // Standard deviation
+                targetState.n = 200;
+                if (tab === 'explorer') {
+                    state.testType = 'z';
+                    state.tails = 'two';
+                }
+            } else if (name === 'drug') {
+                // Drug trial: testing blood pressure reduction
+                targetState.mu0 = 120;    // Baseline BP
+                targetState.xbar = 116.5; // Observed mean BP
+                targetState.sd = 12;      // Standard deviation
+                targetState.n = 25;
+                if (tab === 'explorer') {
+                    state.testType = 't';
+                    state.tails = 'left';
+                    targetState.tails = 'left';
+                } else {
+                    introState.tails = 'left';
+                }
+            } else if (name === 'coin') {
+                // Coin fairness: proportion test
+                targetState.mu0 = 0.5;   // Fair coin
+                targetState.xbar = 0.58; // 58 heads out of 100
+                targetState.sd = 0.05;   // sqrt(p(1-p)/n) ≈ 0.05
+                targetState.n = 100;
+                if (tab === 'explorer') {
+                    state.testType = 'z';
+                    state.tails = 'two';
+                }
+            }
+            
+            if (tab === 'intro') {
+                document.getElementById('intro-xbar').value = introState.xbar;
+                document.getElementById('intro-n').value = introState.n;
+                // Update slider ranges for intro based on preset
+                const xbarSlider = document.getElementById('intro-xbar');
+                if (name === 'drug') {
+                    xbarSlider.min = '100';
+                    xbarSlider.max = '140';
+                    xbarSlider.step = '1';
+                } else if (name === 'coin' || name === 'abtest') {
+                    xbarSlider.min = '0';
+                    xbarSlider.max = '1';
+                    xbarSlider.step = '0.01';
+                } else {
+                    xbarSlider.min = '-3';
+                    xbarSlider.max = '3';
+                    xbarSlider.step = '0.1';
+                }
+                updateIntroDisplay();
+            } else {
+                // Update UI for explorer with appropriate ranges
+                const mu0Slider = document.getElementById('mu0');
+                const xbarSlider = document.getElementById('xbar');
+                const sdSlider = document.getElementById('sd');
+                
+                if (name === 'drug') {
+                    mu0Slider.min = '100'; mu0Slider.max = '140'; mu0Slider.step = '1';
+                    xbarSlider.min = '100'; xbarSlider.max = '140'; xbarSlider.step = '0.5';
+                    sdSlider.min = '5'; sdSlider.max = '20'; sdSlider.step = '0.5';
+                } else if (name === 'coin' || name === 'abtest') {
+                    mu0Slider.min = '0'; mu0Slider.max = '1'; mu0Slider.step = '0.01';
+                    xbarSlider.min = '0'; xbarSlider.max = '1'; xbarSlider.step = '0.01';
+                    sdSlider.min = '0.01'; sdSlider.max = '0.2'; sdSlider.step = '0.01';
+                } else {
+                    mu0Slider.min = '-5'; mu0Slider.max = '5'; mu0Slider.step = '0.1';
+                    xbarSlider.min = '-5'; xbarSlider.max = '5'; xbarSlider.step = '0.1';
+                    sdSlider.min = '0.2'; sdSlider.max = '5'; sdSlider.step = '0.1';
+                }
+                
+                document.getElementById('mu0').value = state.mu0;
+                document.getElementById('xbar').value = state.xbar;
+                document.getElementById('sd').value = state.sd;
+                document.getElementById('n').value = state.n;
+                document.getElementById('testType').value = state.testType;
+                document.getElementById('tails').value = state.tails;
+                updateDisplay();
+            }
+        }
+        
+        // Simulation with proper sampling
+        function simulate() {
+            const baseIters = 5000;
+            const iters = Math.max(1000, Math.min(baseIters, Math.floor(150000 / state.n))); // Keep it snappy
+            const se = state.sd / Math.sqrt(state.n);
+            const obs = (state.xbar - state.mu0) / se;
+            let extreme = 0;
+            
+            if (state.testType === 'z') {
+                // Z-test: sample means are normal
+                for (let i = 0; i < iters; i++) {
+                    const simMean = state.mu0 + se * randn();
+                    const tstat = (simMean - state.mu0) / se;
+                    if (state.tails === 'two' && Math.abs(tstat) >= Math.abs(obs)) extreme++;
+                    if (state.tails === 'left' && tstat <= obs) extreme++;
+                    if (state.tails === 'right' && tstat >= obs) extreme++;
+                }
+            } else {
+                // T-test: resample and compute s each time
+                for (let i = 0; i < iters; i++) {
+                    let sum = 0, sumsq = 0;
+                    for (let k = 0; k < state.n; k++) {
+                        const x = state.mu0 + state.sd * randn();
+                        sum += x;
+                        sumsq += x * x;
+                    }
+                    const xbar = sum / state.n;
+                    const s2 = (sumsq - state.n * xbar * xbar) / (state.n - 1);
+                    const s = Math.sqrt(Math.max(s2, 1e-12));
+                    const tstat = (xbar - state.mu0) / (s / Math.sqrt(state.n));
+                    if (state.tails === 'two' && Math.abs(tstat) >= Math.abs(obs)) extreme++;
+                    if (state.tails === 'left' && tstat <= obs) extreme++;
+                    if (state.tails === 'right' && tstat >= obs) extreme++;
+                }
+            }
+            
+            const phat = extreme / iters;
+            document.getElementById('pBox').textContent = `p ≈ ${phat.toFixed(4)} (simulated)`;
+            document.getElementById('explainBox').innerHTML = 
+                `Simulated ${iters.toLocaleString()} samples under H₀; counted equally or more extreme statistics.<br>
+                <span class="tiny">Assumes independence, identically distributed data; normality matters more for small n in t-tests.</span>`;
+        }
+        
+        // Challenge problem handling
+        const problems = [
+            {
+                scenario: "Testing a new teaching method",
+                data: "Control group: μ = 75, σ = 12<br>Treatment group: n = 36 students, x̄ = 79.5<br>",
+                question: "Is the new method significantly better? (α = 0.05)",
+                options: [
+                    { id: 'a', text: "Test statistic = 2.25, p-value = 0.024, Reject H₀" },
+                    { id: 'b', text: "Test statistic = 2.25, p-value = 0.012, Reject H₀", correct: true },
+                    { id: 'c', text: "Test statistic = 1.5, p-value = 0.134, Fail to reject H₀" },
+                    { id: 'd', text: "Test statistic = 2.25, p-value = 0.048, Reject H₀" }
+                ]
+            },
+            {
+                scenario: "Quality control at a factory",
+                data: "Standard: μ = 500g, σ = 20g<br>Sample: n = 25 items, x̄ = 490g<br>",
+                question: "Is the production process off target? (α = 0.05, two-tailed)",
+                options: [
+                    { id: 'a', text: "z = -2.5, p-value = 0.012, Reject H₀", correct: true },
+                    { id: 'b', text: "z = -2.5, p-value = 0.024, Reject H₀" },
+                    { id: 'c', text: "z = -1.25, p-value = 0.211, Fail to reject H₀" },
+                    { id: 'd', text: "z = -2.5, p-value = 0.006, Reject H₀" }
+                ]
+            }
+        ];
+        
+        let currentProblem = 0;
+        
+        function loadProblem(index) {
+            const problem = problems[index];
+            const dataDiv = document.querySelector('.problem-data');
+            dataDiv.innerHTML = `
+                <strong>Scenario:</strong> ${problem.scenario}<br>
+                <strong>Data:</strong> ${problem.data}
+                <strong>Question:</strong> ${problem.question}
+            `;
+            
+            const optionsDiv = document.querySelector('.answer-options');
+            optionsDiv.innerHTML = '';
+            problem.options.forEach(opt => {
+                const div = document.createElement('div');
+                div.className = 'answer-option';
+                div.dataset.answer = opt.id;
+                div.dataset.correct = opt.correct ? 'true' : 'false';
+                div.innerHTML = `<strong>${opt.id.toUpperCase()})</strong> ${opt.text}`;
+                optionsDiv.appendChild(div);
+            });
+            
+            // Reset selections
+            document.querySelectorAll('.answer-option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.addEventListener('click', function() {
+                    document.querySelectorAll('.answer-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+        }
+        
+        // MathPal AI functions
+        async function callMathPalAI(prompt) {
+            showMathPalThinking();
+            
+            const mathpalPrompt = `
+            You are MathPal, a friendly peer study buddy (not a teacher).
+            Speak casually like a classmate: "I got...", "I tried...", "Want to see?"
+            ${prompt}
+            Keep responses to 2-3 sentences, very conversational.
+            Use $ for LaTeX math. Reference the student's specific input.
+            `;
+            
+            try {
+                // For demonstration, using a timeout to simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Demo responses based on context
+                if (prompt.includes('compare')) {
+                    return "I calculated the same z = 2.25! Since it's asking if it's 'better', I used a right-tailed test. Did you catch that too?";
+                } else if (prompt.includes('what if')) {
+                    return "What if we had n = 100 instead of 36? The standard error would shrink, making our z even bigger! Want to try it?";
+                } else {
+                    return "I'm seeing this as a one-tailed test since we're checking if it's 'better'. The tricky part is remembering not to double the p-value!";
+                }
+            } catch (error) {
+                return getMathPalFallback();
+            } finally {
+                hideMathPalThinking();
+            }
+        }
+        
+        function showMathPalThinking() {
+            const output = document.getElementById('mathpalOut');
+            output.innerHTML = '<span class="mathpal-thinking">MathPal is thinking alongside you...</span>';
+        }
+        
+        function hideMathPalThinking() {
+            const thinking = document.querySelector('.mathpal-thinking');
+            if (thinking) {
+                thinking.classList.remove('mathpal-thinking');
+            }
+        }
+        
+        function getMathPalFallback() {
+            return "Hmm, I'm having trouble connecting right now. Let's work through this together step by step!";
+        }
+        
+        // Event listeners
+        document.getElementById('mu0').addEventListener('input', (e) => {
+            state.mu0 = parseFloat(e.target.value);
+            updateDisplay();
+        });
+        
+        document.getElementById('xbar').addEventListener('input', (e) => {
+            state.xbar = parseFloat(e.target.value);
+            updateDisplay();
+        });
+        
+        document.getElementById('sd').addEventListener('input', (e) => {
+            state.sd = parseFloat(e.target.value);
+            updateDisplay();
+        });
+        
+        document.getElementById('n').addEventListener('input', (e) => {
+            state.n = parseInt(e.target.value);
+            updateDisplay();
+        });
+        
+        document.getElementById('testType').addEventListener('change', (e) => {
+            state.testType = e.target.value;
+            updateDisplay();
+        });
+        
+        document.getElementById('tails').addEventListener('change', (e) => {
+            state.tails = e.target.value;
+            updateDisplay();
+        });
+        
+        // Intro sliders
+        document.getElementById('intro-xbar').addEventListener('input', (e) => {
+            introState.xbar = parseFloat(e.target.value);
+            updateIntroDisplay();
+        });
+        
+        document.getElementById('intro-n').addEventListener('input', (e) => {
+            introState.n = parseInt(e.target.value);
+            updateIntroDisplay();
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            state.mu0 = 0;
+            state.xbar = 1;
+            state.sd = 1.5;
+            state.n = 30;
+            state.testType = 't';
+            state.tails = 'two';
+            
+            document.getElementById('mu0').value = 0;
+            document.getElementById('xbar').value = 1;
+            document.getElementById('sd').value = 1.5;
+            document.getElementById('n').value = 30;
+            document.getElementById('testType').value = 't';
+            document.getElementById('tails').value = 'two';
+            
+            updateDisplay();
+        });
+        
+        document.getElementById('simulateBtn').addEventListener('click', simulate);
+        
+        // Preset buttons
+        document.querySelectorAll('.preset-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab || 'explorer';
+                setPreset(btn.dataset.preset, tab);
+            });
+        });
+        
+        // Hint buttons
+        document.querySelectorAll('.hint-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const hintId = 'hint-' + btn.dataset.hint;
+                const hint = document.getElementById(hintId);
+                if (hint) {
+                    hint.classList.toggle('show');
+                }
+            });
+        });
+        
+        // Challenge buttons
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            const selected = document.querySelector('.answer-option.selected');
+            if (!selected) {
+                alert('Please select an answer!');
+                return;
+            }
+            
+            document.querySelectorAll('.answer-option').forEach(opt => {
+                if (opt.dataset.correct === 'true') {
+                    opt.classList.add('correct');
+                } else if (opt.classList.contains('selected')) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            if (selected.dataset.correct === 'true') {
+                document.getElementById('mathpalOut').textContent = 
+                    "Nice! I got the same answer. The key was recognizing it's a one-tailed test!";
+            } else {
+                document.getElementById('mathpalOut').textContent = 
+                    "I got tripped up at first too! The trick is it's asking if it's 'better', so it's right-tailed, not two-tailed.";
+            }
+        });
+        
+        document.getElementById('newProblemBtn').addEventListener('click', () => {
+            currentProblem = (currentProblem + 1) % problems.length;
+            loadProblem(currentProblem);
+            document.getElementById('mathpalOut').textContent = 
+                "New problem! Let's think about what kind of test this needs...";
+        });
+        
+        // MathPal interaction buttons
+        document.getElementById('compareBtn').addEventListener('click', async () => {
+            const response = await callMathPalAI('Compare approaches for current problem');
+            document.getElementById('mathpalOut').innerHTML = response;
+            renderMath();
+        });
+        
+        document.getElementById('exploreBtn').addEventListener('click', async () => {
+            const response = await callMathPalAI('Explore what if variations');
+            document.getElementById('mathpalOut').innerHTML = response;
+            renderMath();
+        });
+        
+        // Initialize
+        updateDisplay();
+        updateIntroDisplay();
+        loadProblem(0);
+        renderMath();
+        
+        // Set intro slider initial value
+        document.getElementById('intro-xbar').value = introState.xbar;
+        document.getElementById('intro-n').value = introState.n;
+    </script>
+</body>
+</html>
